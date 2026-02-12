@@ -137,12 +137,12 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<CheckUpdatesHub>("/hubs/check-updates").RequireCors("AllowFrontend");
 
-// Initialize database - Désactivé (ne crée plus automatiquement la base de données)
-// using (var scope = app.Services.CreateScope())
-// {
-//     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-//     // Apply pending migrations or create database if missing
-//     db.Database.Migrate();
-// }
+// Initialize database - Activé pour créer automatiquement la base de données
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    // Apply pending migrations or create database if missing
+    db.Database.Migrate();
+}
 
 app.Run();

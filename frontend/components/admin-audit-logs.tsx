@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const API_BASE = "http://172.20.0.3:5000";
+const API_BASE = "http://172.20.0.3";
 
 interface AuditLog {
   id: number;

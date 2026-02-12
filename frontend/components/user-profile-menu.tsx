@@ -48,7 +48,7 @@ export default function UserProfileMenu() {
     
     const fetchUserProfile = async () => {
       try {
-        const response = await fetch("http://172.20.0.3:5001/api/auth/me", {
+        const response = await fetch("http://172.20.0.3/api/auth/me", {
           credentials: "include",
         });
 
@@ -89,7 +89,7 @@ export default function UserProfileMenu() {
     }
 
     try {
-      const response = await fetch("http://172.20.0.3:5001/api/auth/change-password", {
+      const response = await fetch("http://172.20.0.3/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

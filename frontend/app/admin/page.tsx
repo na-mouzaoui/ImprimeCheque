@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
+import { API_BASE } from "@/lib/config";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -21,7 +22,7 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://172.20.0.3:5000/api/auth/login", {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -46,6 +47,7 @@ export default function AdminLoginPage() {
           description: "Vous n'avez pas les permissions nécessaires pour accéder à cette page.",
           variant: "destructive",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -54,7 +56,10 @@ export default function AdminLoginPage() {
         description: "Bienvenue dans l'espace administrateur",
       });
 
-      router.push("/admin/dashboard");
+      // Use setTimeout to ensure localStorage is written before navigation
+      setTimeout(() => {
+        window.location.href = "/admin/dashboard";
+      }, 100);
     } catch (error) {
       toast({
         title: "Erreur de connexion",
