@@ -6,8 +6,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  output: 'export',  // <-- IMPORTANT pour export statique
-  productionBrowserSourceMaps: false,
+  output: 'export',  // <-- IMPORTANT pour export statique  trailingSlash: true,  // <-- Évite les erreurs 403 lors du rafraîchissement  productionBrowserSourceMaps: false,
   turbopack: {}, // Silences Turbopack warning
 }
 

@@ -51,7 +51,7 @@ export default function AuditLogViewer() {
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      let url = "http://localhost:5000/api/admin/audit-logs?";
+      let url = "http://172.20.0.3:5000/api/admin/audit-logs?";
       const params = new URLSearchParams();
 
       if (actionFilter) params.append("action", actionFilter);

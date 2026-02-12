@@ -196,7 +196,7 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
 
     setIsUpdating(true)
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://172.20.0.3:5000"
       const token = localStorage.getItem("jwt")
       const response = await fetch(`${API_BASE}/api/checks/${encodeURIComponent(selectedCheck.reference)}/status`, {
         method: "PATCH",
@@ -207,7 +207,7 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
         credentials: "include",
         body: JSON.stringify({
           status: newStatus,
-          motif: motif.trim() || null
+          motif: motif.trim() || undefined
         })
       })
 
@@ -227,7 +227,7 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
       setChecks(prevChecks => 
         prevChecks.map(c => 
           c.reference === selectedCheck.reference 
-            ? { ...c, status: newStatus, motif: motif.trim() || null }
+            ? { ...c, status: newStatus, motif: motif.trim() || undefined }
             : c
         )
       )
@@ -550,7 +550,7 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
                             // Pour rejeté, changer directement sans motif
                             setIsUpdating(true)
                             try {
-                              const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
+                              const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://172.20.0.3:5000"
                               const token = localStorage.getItem("jwt")
                             const response = await fetch(`${API_BASE}/api/checks/${encodeURIComponent(check.reference)}/status`, {
                                 method: "PATCH",
@@ -561,7 +561,7 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
                                 credentials: "include",
                                 body: JSON.stringify({
                                   status: newStatus,
-                                  motif: null
+                                  motif: undefined
                                 })
                               })
 
@@ -581,7 +581,7 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
                               setChecks(prevChecks => 
                                 prevChecks.map(c => 
                                   c.reference === check.reference 
-                                    ? { ...c, status: newStatus, motif: null }
+                                    ? { ...c, status: newStatus, motif: undefined }
                                     : c
                                 )
                               )
@@ -667,7 +667,7 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
           <DialogHeader>
             <DialogTitle>Annuler le chèque</DialogTitle>
             <DialogDescription>
-              Chèque #{selectedCheck?.reference || selectedCheck?.id} - {selectedCheck?.payee}
+              Chèque #{selectedCheck?.reference} - {selectedCheck?.payee}
             </DialogDescription>
           </DialogHeader>
 

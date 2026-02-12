@@ -11,6 +11,12 @@ using static System.Net.WebRequestMethods;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to listen on all network interfaces
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(5001); // Écoute sur 0.0.0.0:5001
+});
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddSignalR(options =>
