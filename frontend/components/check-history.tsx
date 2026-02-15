@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
+import { formatDateFR, parseFlexibleDate } from "@/lib/date-utils"
 
 interface CheckHistoryProps {
   checks: Check[]
@@ -117,8 +118,8 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
         bValue = b.amount
         break
       case 'date':
-        aValue = new Date(a.date).getTime()
-        bValue = new Date(b.date).getTime()
+        aValue = parseFlexibleDate(a.date)?.getTime() ?? 0
+        bValue = parseFlexibleDate(b.date)?.getTime() ?? 0
         break
       case 'city':
         aValue = a.city || ''
@@ -163,9 +164,15 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
     const matchesMinAmount = minAmount === "" || check.amount >= Number.parseFloat(minAmount)
     const matchesMaxAmount = maxAmount === "" || check.amount <= Number.parseFloat(maxAmount)
 
-    const checkDate = new Date(check.date)
-    const matchesStartDate = startDate === "" || checkDate >= new Date(startDate)
-    const matchesEndDate = endDate === "" || checkDate <= new Date(endDate)
+    const checkDate = parseFlexibleDate(check.date)
+    if (!checkDate) {
+      return false
+    }
+
+    const start = startDate === "" ? null : parseFlexibleDate(startDate)
+    const end = endDate === "" ? null : parseFlexibleDate(endDate)
+    const matchesStartDate = !start || checkDate >= start
+    const matchesEndDate = !end || checkDate <= end
 
     return (
       matchesSearch &&
@@ -514,11 +521,7 @@ export function CheckHistory({ checks: initialChecks, users, banks }: CheckHisto
                     </TableCell>
                     <TableCell className="font-semibold">{formatNumber(check.amount)}</TableCell>
                     <TableCell className="text-sm">
-                      {new Date(check.date).toLocaleDateString("fr-FR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "2-digit",
-                      })}
+                      {formatDateFR(check.date)}
                     </TableCell>
                     <TableCell className="text-sm">{check.city || "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{formatDate(check.createdAt)}</TableCell>

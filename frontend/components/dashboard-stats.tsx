@@ -23,6 +23,7 @@ import type { Bank, Check, User } from "@/lib/db"
 import { exportToExcel, exportStatsToPDF } from "@/lib/export-utils"
 import { CheckHistory } from "./check-history"
 import { Label } from "@/components/ui/label"
+import { parseFlexibleDate } from "@/lib/date-utils"
 
 interface DashboardStatsProps {
   stats: {
@@ -64,9 +65,13 @@ export function DashboardStats({ stats, checks, users, currentUser, regions = []
   // Appliquer le filtre de date
   if (startDate || endDate) {
     filteredChecks = filteredChecks.filter(check => {
-      const checkDate = new Date(check.date)
-      const matchesStartDate = startDate === "" || checkDate >= new Date(startDate)
-      const matchesEndDate = endDate === "" || checkDate <= new Date(endDate)
+      const checkDate = parseFlexibleDate(check.date)
+      if (!checkDate) return false
+
+      const start = startDate === "" ? null : parseFlexibleDate(startDate)
+      const end = endDate === "" ? null : parseFlexibleDate(endDate)
+      const matchesStartDate = !start || checkDate >= start
+      const matchesEndDate = !end || checkDate <= end
       return matchesStartDate && matchesEndDate
     })
   }

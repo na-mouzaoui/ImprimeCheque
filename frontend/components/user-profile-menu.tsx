@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { getRoleLabel } from "@/lib/roles";
 import { User, Key, LogOut, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -162,7 +163,7 @@ export default function UserProfileMenu() {
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
+              <Badge variant={getRoleBadgeVariant(user.role)}>{getRoleLabel(user.role)}</Badge>
               {user.region && <Badge variant="secondary">{user.region}</Badge>}
             </div>
             <div>

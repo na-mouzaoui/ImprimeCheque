@@ -2,6 +2,7 @@ import * as XLSX from "xlsx"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import type { Bank, Check, User } from "./db"
+import { parseFlexibleDate } from "./date-utils"
 
 const timestampSuffix = () => {
   const now = new Date()
@@ -191,14 +192,14 @@ export function exportHistoryToPDF(checks: Check[], users: User[], banks: Bank[]
 
   const checksData = sortedChecks.map((check, index) => {
     const createdDate = new Date(check.createdAt)
-    const emissionDate = new Date(check.date)
+    const emissionDate = parseFlexibleDate(check.date)
     const bankCode = getBankCode(check.bank, banks)
     return [
       index + 1,
       check.reference || "—",
       createdDate.toLocaleDateString("fr-FR", { year: "2-digit", month: "2-digit", day: "2-digit" }),
       createdDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-      emissionDate.toLocaleDateString("fr-FR", { year: "2-digit", month: "2-digit", day: "2-digit" }),
+      emissionDate ? emissionDate.toLocaleDateString("fr-FR", { year: "2-digit", month: "2-digit", day: "2-digit" }) : "",
       userMap[check.userId] || "Inconnu",
       bankCode,
       check.payee,
@@ -267,13 +268,13 @@ export function exportHistoryToExcel(checks: Check[], users: User[], banks: Bank
     ],
     ...sortedChecks.map((check, index) => {
       const createdDate = new Date(check.createdAt)
-      const emissionDate = new Date(check.date)
+      const emissionDate = parseFlexibleDate(check.date)
       return [
         index + 1, // Numéro de ligne
         check.reference || "—",
           createdDate.toLocaleDateString("fr-FR", { year: '2-digit', month: '2-digit', day: '2-digit' }),
         createdDate.toLocaleTimeString("fr-FR", { hour: '2-digit', minute: '2-digit' }),
-          emissionDate.toLocaleDateString("fr-FR", { year: '2-digit', month: '2-digit', day: '2-digit' }),
+          emissionDate ? emissionDate.toLocaleDateString("fr-FR", { year: '2-digit', month: '2-digit', day: '2-digit' }) : "",
         userMap[check.userId] || "Inconnu",
           getBankCode(check.bank, banks),
         check.payee,

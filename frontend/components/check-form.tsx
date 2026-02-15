@@ -19,6 +19,7 @@ import { splitAmountInWords } from "@/lib/text-utils"
 import { mergeBankPositions, parseBankPositions } from "@/lib/bank-positions"
 import { generateCheckPDF, printCheckPDF } from "@/lib/pdf-generator"
 import { useToast } from "@/hooks/use-toast"
+import { formatDateFR, getTodayISODate } from "@/lib/date-utils"
 
 const PDFViewer = dynamic(() => import("./pdf-viewer").then(mod => mod.PDFViewer), {
   ssr: false,
@@ -204,13 +205,7 @@ export function CheckForm({ userId }: CheckFormProps) {
   const [amountInWords, setAmountInWords] = useState("")
   const [payee, setPayee] = useState("")
   const [city, setCity] = useState("Alger")
-  const [date, setDate] = useState(() => {
-    const today = new Date()
-    const day = String(today.getDate()).padStart(2, '0')
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const year = today.getFullYear()
-    return `${day}/${month}/${year}`
-  })
+  const [date, setDate] = useState(() => getTodayISODate())
   const [reference, setReference] = useState("")
   const [bank, setBank] = useState("")
   const [checkbookId, setCheckbookId] = useState("")
@@ -683,8 +678,7 @@ export function CheckForm({ userId }: CheckFormProps) {
                   <Label htmlFor="date">Date</Label>
                   <Input
                     id="date"
-                    type="text"
-                    placeholder="jj/mm/aaaa"
+                    type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     disabled={!isBankSelected}
@@ -791,7 +785,7 @@ export function CheckForm({ userId }: CheckFormProps) {
             positions={selectedBank.positions}
             values={{
               city,
-              date: new Date(date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" }),
+              date: formatDateFR(date),
               payee,
               amount: amount || "",
               amountLine1: amountInWords,

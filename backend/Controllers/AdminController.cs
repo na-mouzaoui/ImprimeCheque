@@ -5,6 +5,7 @@ using CheckFillingAPI.Models;
 using CheckFillingAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace CheckFillingAPI.Controllers;
 
@@ -104,8 +105,8 @@ public class AdminController : ControllerBase
         if (await _context.Users.AnyAsync(u => u.Email == request.Email))
             return BadRequest("Cet email existe déjà");
 
-        if (!request.PhoneNumber.StartsWith("0661"))
-            return BadRequest("Le numéro de téléphone doit commencer par 0661");
+        if (!Regex.IsMatch((request.PhoneNumber ?? string.Empty).Trim(), @"^0\d{9}$"))
+            return BadRequest("Le numéro de téléphone doit commencer par 0 et contenir exactement 10 chiffres");
 
         if (request.Role == "regionale" && string.IsNullOrWhiteSpace(request.Region))
             return BadRequest("La région est requise pour le rôle régionale");
@@ -176,9 +177,9 @@ public class AdminController : ControllerBase
             user.Direction = request.Direction;
         if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
         {
-            if (!request.PhoneNumber.StartsWith("0661"))
-                return BadRequest("Le numéro de téléphone doit commencer par 0661");
-            user.PhoneNumber = request.PhoneNumber;
+            if (!Regex.IsMatch(request.PhoneNumber.Trim(), @"^0\d{9}$"))
+                return BadRequest("Le numéro de téléphone doit commencer par 0 et contenir exactement 10 chiffres");
+            user.PhoneNumber = request.PhoneNumber.Trim();
         }
         if (!string.IsNullOrWhiteSpace(request.Role))
         {

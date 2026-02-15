@@ -31,6 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus, Eye, EyeOff } from "lucide-react";
+import { getRoleLabel } from "@/lib/roles";
 
 interface User {
   id: number;
@@ -124,11 +125,11 @@ export default function AdminUserManagement() {
   };
 
   const handleCreate = async () => {
-    // Validate phone number
-    if (!formData.phoneNumber.startsWith("0661")) {
+    // Validate phone number: must start with 0 and have exactly 10 digits
+    if (!/^0\d{9}$/.test(formData.phoneNumber.trim())) {
       toast({
         title: "Erreur de validation",
-        description: "Le numéro de téléphone doit commencer par 0661",
+        description: "Le numéro de téléphone doit commencer par 0 et contenir exactement 10 chiffres",
         variant: "destructive",
       });
       return;
@@ -373,12 +374,12 @@ export default function AdminUserManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Téléphone de service * (0661...)</Label>
+                <Label htmlFor="phoneNumber">Téléphone de service * (0XXXXXXXXX)</Label>
                 <Input
                   id="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                  placeholder="0661000000"
+                  placeholder="0XXXXXXXXX"
                   required
                 />
               </div>
@@ -389,8 +390,8 @@ export default function AdminUserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="direction">Direction</SelectItem>
-                    <SelectItem value="comptabilite">Comptabilité</SelectItem>
+                    <SelectItem value="direction">Global</SelectItem>
+                    <SelectItem value="comptabilite">Finance</SelectItem>
                     <SelectItem value="regionale">Régionale</SelectItem>
                   </SelectContent>
                 </Select>
@@ -446,7 +447,7 @@ export default function AdminUserManagement() {
                 <TableCell>{user.direction}</TableCell>
                 <TableCell>{user.phoneNumber}</TableCell>
                 <TableCell>
-                  <Badge className="bg-green-100 text-green-800">{user.role}</Badge>
+                  <Badge className="bg-green-100 text-green-800">{getRoleLabel(user.role)}</Badge>
                 </TableCell>
                 <TableCell>{user.region || "-"}</TableCell>
                 <TableCell className="text-right">
@@ -535,8 +536,8 @@ export default function AdminUserManagement() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="direction">Direction</SelectItem>
-                  <SelectItem value="comptabilite">Comptabilité</SelectItem>
+                  <SelectItem value="direction">Global</SelectItem>
+                  <SelectItem value="comptabilite">Finance</SelectItem>
                   <SelectItem value="regionale">Régionale</SelectItem>
                 </SelectContent>
               </Select>

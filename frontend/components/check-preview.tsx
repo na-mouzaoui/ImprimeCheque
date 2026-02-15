@@ -7,6 +7,7 @@ import { splitAmountInWords } from "@/lib/text-utils"
 import { mergeBankPositions, parseBankPositions } from "@/lib/bank-positions"
 import dynamic from "next/dynamic"
 import { CheckCanvas } from "./check-canvas"
+import { formatDateFR } from "@/lib/date-utils"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://172.20.0.3"
 
@@ -96,12 +97,6 @@ export function CheckPreview({
     setNumPages(numPages)
   }
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return ""
-    const d = new Date(dateStr)
-    return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })
-  }
-
   const positions = bankData?.positions
 
   if (positions) {
@@ -120,7 +115,7 @@ export function CheckPreview({
           showRectangles={showRectangles}
           values={{
             city,
-            date: formatDate(date),
+            date: formatDateFR(date),
             payee,
             amount: amount || "",
             amountLine1,
