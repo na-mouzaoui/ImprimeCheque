@@ -345,20 +345,36 @@ export function CheckForm({ userId }: CheckFormProps) {
   }
 
   const formatAmountWithSpaces = (value: string): string => {
-    // Retirer tous les espaces existants
-    const cleaned = value.replace(/\s/g, "")
-    // Séparer partie entière et décimale
-    const parts = cleaned.split(".")
-    // Ajouter espaces tous les 3 chiffres pour partie entière
-    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ")
-    // Retourner avec décimale si présente
-    return parts.length > 1 ? `${integerPart}.${parts[1]}` : integerPart
+    const cleaned = value.replace(/\s/g, "").replace(/[^0-9.,]/g, "").replace(/\./g, ",")
+    const hasTrailingComma = cleaned.endsWith(",")
+    const parts = cleaned.split(",")
+    const integerRaw = parts[0] ?? ""
+    const decimalRaw = parts.slice(1).join("")
+    const integerPart = integerRaw.replace(/\B(?=(\d{3})+(?!\d))/g, " ")
+    if (decimalRaw.length > 0) {
+      return `${integerPart || "0"},${decimalRaw}`
+    }
+    if (hasTrailingComma) {
+      return `${integerPart || "0"},`
+    }
+    return integerPart
+  }
+
+  const parseAmountToNumber = (value: string): number | null => {
+    const cleaned = value.replace(/\s/g, "").replace(/\./g, ",")
+    if (!cleaned) return null
+    const parts = cleaned.split(",")
+    const integerPart = parts[0] || "0"
+    const decimalPart = parts.slice(1).join("")
+    const numericString = decimalPart.length > 0 ? `${integerPart}.${decimalPart}` : integerPart
+    const numericValue = Number.parseFloat(numericString)
+    return Number.isNaN(numericValue) ? null : numericValue
   }
 
   const handleAmountChange = (value: string) => {
     // Vérifier que la valeur ne contient que des chiffres, espaces, points et virgules
-    const hasLetters = /[a-zA-Z]/.test(value)
-    if (hasLetters) {
+    const hasInvalidChars = /[^0-9\s.,]/.test(value)
+    if (hasInvalidChars) {
       toast({
         title: "Erreur de saisie",
         description: "Le montant ne peut pas contenir de lettres",
@@ -367,14 +383,11 @@ export function CheckForm({ userId }: CheckFormProps) {
       return
     }
     
-    // Retirer les espaces pour le calcul
-    const cleanValue = value.replace(/\s/g, "")
-    // Formater avec espaces pour l'affichage
-    const formatted = formatAmountWithSpaces(cleanValue)
+    const formatted = formatAmountWithSpaces(value)
     setAmount(formatted)
-    
-    const numValue = Number.parseFloat(cleanValue)
-    if (!isNaN(numValue) && numValue > 0) {
+
+    const numValue = parseAmountToNumber(formatted)
+    if (numValue !== null && numValue > 0) {
       setAmountInWords(numberToWordsFR(numValue))
     } else {
       setAmountInWords("")
@@ -382,8 +395,8 @@ export function CheckForm({ userId }: CheckFormProps) {
   }
 
   const handleRegenerateWords = () => {
-    const numValue = Number.parseFloat(amount.replace(/\s/g, ""))
-    if (!isNaN(numValue) && numValue > 0) {
+    const numValue = parseAmountToNumber(amount)
+    if (numValue !== null && numValue > 0) {
       setAmountInWords(numberToWordsFR(numValue))
     }
   }
@@ -463,7 +476,7 @@ export function CheckForm({ userId }: CheckFormProps) {
       // Sauvegarder le chèque dans la base de données
       await createCheck({
         userId,
-        amount: Number.parseFloat(amount.replace(/\s/g, "")),
+        amount: parseAmountToNumber(amount) ?? 0,
         payee,
         city,
         date,
@@ -484,7 +497,7 @@ export function CheckForm({ userId }: CheckFormProps) {
 
         const pdfBytes = await generateCheckPDF({
           city: city,
-          date: date,
+          date: formatDateFR(date),
           payee,
           amount: amount || "",
           amountInWords,
@@ -589,7 +602,7 @@ export function CheckForm({ userId }: CheckFormProps) {
                 <Input
                   id="amount"
                   type="text"
-                  placeholder="10 000.00"
+                  placeholder="10 000,00"
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
                   disabled={!isBankSelected}
@@ -617,18 +630,7 @@ export function CheckForm({ userId }: CheckFormProps) {
                   placeholder="dix mille dinars algériens"
                   value={amountInWords}
                   onChange={(e) => {
-                    const value = e.target.value
-                    // Vérifier que la valeur ne contient pas de chiffres
-                    const hasDigits = /\d/.test(value)
-                    if (hasDigits) {
-                      toast({
-                        title: "Erreur de saisie",
-                        description: "Le montant en lettres ne peut pas contenir de chiffres",
-                        variant: "destructive"
-                      })
-                      return
-                    }
-                    setAmountInWords(value)
+                    setAmountInWords(e.target.value)
                   }}
                   disabled={!isBankSelected}
                   rows={2}
@@ -721,9 +723,8 @@ export function CheckForm({ userId }: CheckFormProps) {
                     }
 
                     // Vérifier que le montant est un nombre valide
-                    const cleanAmount = amount.replace(/\s/g, "")
-                    const numericAmount = parseFloat(cleanAmount)
-                    if (isNaN(numericAmount) || numericAmount <= 0) {
+                    const numericAmount = parseAmountToNumber(amount)
+                    if (numericAmount === null || numericAmount <= 0) {
                       toast({
                         title: "❌ Erreur",
                         description: "Le montant doit être un nombre valide et positif",

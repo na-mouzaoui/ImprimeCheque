@@ -1,7 +1,8 @@
 export function numberToWordsFR(num: number): string {
-  if (num === 0) return "zéro dinars algériens"
+  if (!Number.isFinite(num)) return "montant invalide"
+  if (num === 0) return "zéro DA"
   if (num < 0) return "montant invalide"
-  if (num > 9999999999) return "montant trop élevé"
+  if (num > Number.MAX_SAFE_INTEGER) return "montant trop élevé"
 
   const units = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"]
   const teens = ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"]
@@ -121,28 +122,23 @@ export function numberToWordsFR(num: number): string {
   }
 
   // Séparer partie entière et décimale
-  const integerPart = Math.floor(num)
-  const decimalPart = Math.round((num - integerPart) * 100)
+  let integerPart = Math.floor(num)
+  let decimalPart = Math.round((num - integerPart + Number.EPSILON) * 100)
 
-  let result = convertNumber(integerPart)
-  
-  // Ajouter la devise
-  if (integerPart === 1) {
-    result += " dinar algérien"
-  } else {
-    result += " dinars algériens"
+  if (decimalPart === 100) {
+    integerPart += 1
+    decimalPart = 0
   }
 
-  // Ajouter les centimes (toujours afficher, même si zéro)
+  let result = integerPart === 0 ? "zéro" : convertNumber(integerPart)
+
+  // Ajouter la devise
+  result += " DA"
+
+  // Ajouter les centimes (uniquement si > 0), en chiffres
   if (decimalPart > 0) {
-    result += " et " + convertUnderHundred(decimalPart)
-    if (decimalPart === 1) {
-      result += " centime"
-    } else {
-      result += " centimes"
-    }
-  } else {
-    result += " et zéro centimes"
+    const centimes = String(decimalPart).padStart(2, "0")
+    result += " et " + centimes + " cts"
   }
 
   // Mettre la première lettre en majuscule
