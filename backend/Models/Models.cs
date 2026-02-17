@@ -11,11 +11,11 @@ public class User
     public string PhoneNumber { get; set; } = string.Empty;
     public string Role { get; set; } = "comptabilite"; // direction, comptabilite, regionale, admin
     public string? Region { get; set; } // nord, sud, est, ouest (pour role regionale uniquement)
-    public string CalibrationsJson { get; set; } = "{}"; // Stockage des calibrations par banque {bankId: positionsJson}
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public ICollection<Check> Checks { get; set; } = new List<Check>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+    public ICollection<UserBankCalibration> UserBankCalibrations { get; set; } = new List<UserBankCalibration>();
 }
 
 public class Check
@@ -121,4 +121,17 @@ public class AuditLog
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public User User { get; set; } = null!;
+}
+
+public class UserBankCalibration
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public int BankId { get; set; }
+    public string PositionsJson { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    
+    public User User { get; set; } = null!;
+    public Bank Bank { get; set; } = null!;
 }

@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Supplier> Suppliers { get; set; }
     public DbSet<Checkbook> Checkbooks { get; set; }
+    public DbSet<UserBankCalibration> UserBankCalibrations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -96,6 +97,22 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Name).IsRequired();
             entity.Property(e => e.CompanyType).IsRequired();
             entity.HasIndex(e => e.Name);
+        });
+
+        // UserBankCalibration configuration
+        modelBuilder.Entity<UserBankCalibration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.User)
+                  .WithMany(u => u.UserBankCalibrations)
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Bank)
+                  .WithMany()
+                  .HasForeignKey(e => e.BankId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.PositionsJson).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.BankId }).IsUnique();
         });
 
         // Seed data

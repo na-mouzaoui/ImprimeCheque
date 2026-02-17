@@ -351,10 +351,6 @@ namespace CheckFillingAPI.Migrations
                     b.Property<string>("Region")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CalibrationsJson")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -370,7 +366,6 @@ namespace CheckFillingAPI.Migrations
                         new
                         {
                             Id = 1,
-                            CalibrationsJson = "{}",
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Direction = "Test",
                             Email = "test@gmail.com",
@@ -383,7 +378,6 @@ namespace CheckFillingAPI.Migrations
                         new
                         {
                             Id = 2,
-                            CalibrationsJson = "{}",
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Direction = "Administration",
                             Email = "admin@test.com",
@@ -396,7 +390,6 @@ namespace CheckFillingAPI.Migrations
                         new
                         {
                             Id = 3,
-                            CalibrationsJson = "{}",
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Direction = "Administration",
                             Email = "admin@gmail.com",
@@ -406,6 +399,40 @@ namespace CheckFillingAPI.Migrations
                             PhoneNumber = "0661999998",
                             Role = "admin"
                         });
+                });
+
+            modelBuilder.Entity("CheckFillingAPI.Models.UserBankCalibration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BankId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PositionsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankId");
+
+                    b.HasIndex("UserId", "BankId")
+                        .IsUnique();
+
+                    b.ToTable("UserBankCalibrations");
                 });
 
             modelBuilder.Entity("CheckFillingAPI.Models.AuditLog", b =>
@@ -448,11 +475,37 @@ namespace CheckFillingAPI.Migrations
                     b.Navigation("Bank");
                 });
 
+            modelBuilder.Entity("CheckFillingAPI.Models.UserBankCalibration", b =>
+                {
+                    b.HasOne("CheckFillingAPI.Models.Bank", "Bank")
+                        .WithMany("UserBankCalibrations")
+                        .HasForeignKey("BankId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CheckFillingAPI.Models.User", "User")
+                        .WithMany("UserBankCalibrations")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Bank");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CheckFillingAPI.Models.Bank", b =>
+                {
+                    b.Navigation("UserBankCalibrations");
+                });
+
             modelBuilder.Entity("CheckFillingAPI.Models.User", b =>
                 {
                     b.Navigation("AuditLogs");
 
                     b.Navigation("Checks");
+
+                    b.Navigation("UserBankCalibrations");
                 });
 #pragma warning restore 612, 618
         }

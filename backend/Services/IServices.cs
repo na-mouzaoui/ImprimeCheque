@@ -21,6 +21,7 @@ public interface IBankService
     Task<Bank?> UpdateBankPositionsAsync(int id, BankPositions positions);
     Task<User?> GetUserWithCalibrationsAsync(int userId);
     Task<bool> SaveUserCalibrationAsync(int userId, int bankId, string positionsJson);
+    Task<string?> GetUserCalibrationAsync(int userId, int bankId);
 }
 
 public interface ICheckService

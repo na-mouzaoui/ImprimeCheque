@@ -125,11 +125,36 @@ public class BankService : IBankService
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return false;
 
-        var calibrations = JsonSerializer.Deserialize<Dictionary<string, string>>(user.CalibrationsJson) ?? new Dictionary<string, string>();
-        calibrations[bankId.ToString()] = positionsJson;
-        user.CalibrationsJson = JsonSerializer.Serialize(calibrations);
+        var calibration = await _context.UserBankCalibrations
+            .FirstOrDefaultAsync(ubc => ubc.UserId == userId && ubc.BankId == bankId);
+
+        if (calibration == null)
+        {
+            calibration = new UserBankCalibration
+            {
+                UserId = userId,
+                BankId = bankId,
+                PositionsJson = positionsJson,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.UserBankCalibrations.Add(calibration);
+        }
+        else
+        {
+            calibration.PositionsJson = positionsJson;
+            calibration.UpdatedAt = DateTime.UtcNow;
+        }
 
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<string?> GetUserCalibrationAsync(int userId, int bankId)
+    {
+        var calibration = await _context.UserBankCalibrations
+            .FirstOrDefaultAsync(ubc => ubc.UserId == userId && ubc.BankId == bankId);
+        
+        return calibration?.PositionsJson;
     }
 }

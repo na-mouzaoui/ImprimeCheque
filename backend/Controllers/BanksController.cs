@@ -147,20 +147,10 @@ public class BanksController : ControllerBase
     public async Task<IActionResult> GetUserCalibration(int bankId)
     {
         var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var user = await _bankService.GetUserWithCalibrationsAsync(userId);
         
-        if (user == null)
-            return NotFound(new { message = "Utilisateur non trouvé" });
-
-        var calibrations = JsonSerializer.Deserialize<Dictionary<string, string>>(user.CalibrationsJson) ?? new Dictionary<string, string>();
+        var positionsJson = await _bankService.GetUserCalibrationAsync(userId, bankId);
         
-        if (calibrations.TryGetValue(bankId.ToString(), out var positionsJson))
-        {
-            return Ok(new { positionsJson });
-        }
-
-        // Return empty if no user-specific calibration
-        return Ok(new { positionsJson = "" });
+        return Ok(new { positionsJson = positionsJson ?? "" });
     }
 
     // POST: api/banks/{bankId}/user-calibration
