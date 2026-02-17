@@ -40,7 +40,7 @@ const requestWithAuth = async (input: string, init: RequestInit = {}) => {
 }
 
 const createCheck = async (data: {
-  userId: string
+  userId: string | number
   amount: number
   payee: string
   city: string
@@ -182,6 +182,11 @@ function PrintCheckCanvas({ positions, values }: {
 
 interface CheckFormProps {
   userId: string | number
+  user?: {
+    id: string | number
+    role: string
+    region?: string | null
+  }
 }
 
 interface Checkbook {
@@ -198,13 +203,13 @@ interface Checkbook {
   remaining: number
 }
 
-export function CheckForm({ userId }: CheckFormProps) {
+export function CheckForm({ userId, user }: CheckFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [amount, setAmount] = useState("")
   const [amountInWords, setAmountInWords] = useState("")
   const [payee, setPayee] = useState("")
-  const [city, setCity] = useState("Alger")
+  const [city, setCity] = useState("")
   const [date, setDate] = useState(() => getTodayISODate())
   const [reference, setReference] = useState("")
   const [bank, setBank] = useState("")
@@ -218,6 +223,15 @@ export function CheckForm({ userId }: CheckFormProps) {
   const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null)
   const generatedPreviewRef = useRef<HTMLDivElement>(null)
   const [generatedPreviewWidth, setGeneratedPreviewWidth] = useState(620)
+  const [regionCities, setRegionCities] = useState<string[]>([])
+  const [isLoadingRegion, setIsLoadingRegion] = useState(false)
+
+  const getDefaultCity = useCallback(() => {
+    if (user?.role === "regionale" && regionCities.length > 0) {
+      return regionCities[0]
+    }
+    return "Alger"
+  }, [user?.role, regionCities])
 
   const loadBanks = useCallback(async () => {
     const response = await requestWithAuth(`${API_BASE}/api/banks`)
@@ -267,6 +281,34 @@ export function CheckForm({ userId }: CheckFormProps) {
       setSuppliers(Array.isArray(data) ? data : [])
     }
     loadSuppliers()
+
+    // Load region cities for regional users
+    const loadRegionCities = async () => {
+      if (user?.role === "regionale" && user?.region) {
+        setIsLoadingRegion(true)
+        try {
+          const response = await requestWithAuth(`${API_BASE}/api/regions/by-name/${encodeURIComponent(user.region)}`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.villes && Array.isArray(data.villes)) {
+              setRegionCities(data.villes)
+              // Set default city to first city in region instead of "Alger"
+              if (data.villes.length > 0) {
+                setCity(data.villes[0])
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error loading region cities:", error)
+        } finally {
+          setIsLoadingRegion(false)
+        }
+      } else {
+        // For non-regional users, default to "Alger"
+        setCity("Alger")
+      }
+    }
+    loadRegionCities()
   }, [])
 
   useEffect(() => {
@@ -485,10 +527,25 @@ export function CheckForm({ userId }: CheckFormProps) {
         checkbookId: checkbookId ? parseInt(checkbookId) : undefined
       })
 
-      // Générer et imprimer le PDF avec les positions de calibrage
+      // Générer et imprimer le PDF avec les positions de calibrage (utiliser le calibrage utilisateur si disponible)
       const currentBank = banks.find((b) => b.name === bank)
-      const positions = currentBank?.positions
+      let positions = currentBank?.positions
       const pdfUrl = currentBank?.pdfUrl
+
+      // Charger le calibrage utilisateur si disponible
+      if (currentBank) {
+        try {
+          const response = await requestWithAuth(`${API_BASE}/api/banks/${currentBank.id}/user-calibration`)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.positionsJson && data.positionsJson !== "") {
+              positions = mergeBankPositions(parseBankPositions(data.positionsJson))
+            }
+          }
+        } catch (error) {
+          // Utiliser les positions par défaut de la banque
+        }
+      }
 
       if (positions && pdfUrl) {
         const normalizedPdfUrl = pdfUrl.startsWith("http")
@@ -504,7 +561,7 @@ export function CheckForm({ userId }: CheckFormProps) {
           bankPdfUrl: normalizedPdfUrl,
           positions
         })
-        const blob = new Blob([pdfBytes], { type: "application/pdf" })
+        const blob = new Blob([new Uint8Array(pdfBytes).buffer], { type: "application/pdf" })
         const url = URL.createObjectURL(blob)
         setGeneratedPdfUrl((prev) => {
           if (prev) URL.revokeObjectURL(prev)
@@ -529,7 +586,7 @@ export function CheckForm({ userId }: CheckFormProps) {
         setAmount("")
         setAmountInWords("")
         setPayee("")
-        setCity("Alger")
+        setCity(getDefaultCity())
         setReference("")
         setIsPrinting(false)
         router.push("/dashboard")
@@ -662,16 +719,24 @@ export function CheckForm({ userId }: CheckFormProps) {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="city">Wilaya</Label>
-                  <Select value={city} onValueChange={setCity} required disabled={!isBankSelected}>
+                  <Select value={city} onValueChange={setCity} required disabled={!isBankSelected || isLoadingRegion}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner une wilaya" />
+                      <SelectValue placeholder={isLoadingRegion ? "Chargement..." : "Sélectionner une wilaya"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {VILLES.map((wilaya) => (
-                        <SelectItem key={wilaya.code} value={wilaya.name}>
-                          {wilaya.code} - {wilaya.name}
-                        </SelectItem>
-                      ))}
+                      {VILLES.map((wilaya) => {
+                        const isDisabled = user?.role === "regionale" && regionCities.length > 0 && !regionCities.includes(wilaya.name)
+                        return (
+                          <SelectItem 
+                            key={wilaya.code} 
+                            value={wilaya.name}
+                            disabled={isDisabled}
+                            className={isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                          >
+                            {wilaya.code} - {wilaya.name}
+                          </SelectItem>
+                        )
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

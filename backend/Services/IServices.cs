@@ -19,6 +19,8 @@ public interface IBankService
     Task<Bank?> UpdateBankAsync(int id, Bank bank, IFormFile? pdfFile);
     Task<bool> DeleteBankAsync(int id);
     Task<Bank?> UpdateBankPositionsAsync(int id, BankPositions positions);
+    Task<User?> GetUserWithCalibrationsAsync(int userId);
+    Task<bool> SaveUserCalibrationAsync(int userId, int bankId, string positionsJson);
 }
 
 public interface ICheckService

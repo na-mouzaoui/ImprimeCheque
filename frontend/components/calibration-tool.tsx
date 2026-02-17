@@ -89,10 +89,33 @@ export function CalibrationTool({ refreshKey, preSelectedBankId }: CalibrationTo
 
   useEffect(() => {
     if (selectedBank) {
-      setPositions(selectedBank.positions)
-      setHasSecondLine(!!selectedBank.positions.amountInWordsLine2)
+      // First try to load user-specific calibration
+      loadUserCalibration(selectedBank.id)
     }
   }, [selectedBank])
+
+  const loadUserCalibration = async (bankId: string) => {
+    try {
+      const response = await requestWithAuth(`${API_BASE}/api/banks/${bankId}/user-calibration`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.positionsJson && data.positionsJson !== "") {
+          // User has custom calibration
+          const userPositions = mergeBankPositions(parseBankPositions(data.positionsJson))
+          setPositions(userPositions)
+          setHasSecondLine(!!userPositions.amountInWordsLine2)
+        } else {
+          // Fall back to bank's default calibration
+          setPositions(selectedBank!.positions)
+          setHasSecondLine(!!selectedBank!.positions.amountInWordsLine2)
+        }
+      }
+    } catch (error) {
+      // Fall back to bank's default calibration
+      setPositions(selectedBank!.positions)
+      setHasSecondLine(!!selectedBank!.positions.amountInWordsLine2)
+    }
+  }
 
   const onDocumentLoadSuccess = ({ numPages, pageWidth, pageHeight }: { numPages: number; pageWidth: number; pageHeight: number }) => {
     setNumPages(numPages)
@@ -128,17 +151,17 @@ export function CalibrationTool({ refreshKey, preSelectedBankId }: CalibrationTo
     const finalPositions = hasSecondLine ? positions : { ...positions, amountInWordsLine2: undefined }
 
     try {
-      const response = await requestWithAuth(`${API_BASE}/api/banks/${selectedBank.id}/positions`, {
-        method: "PATCH",
+      // Save to user-specific calibration
+      const response = await requestWithAuth(`${API_BASE}/api/banks/${selectedBank.id}/user-calibration`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(finalPositions),
+        body: JSON.stringify({ positionsJson: JSON.stringify(finalPositions) }),
       })
 
       if (response.ok) {
-        const result = await response.json()
         toast({
           title: "✓ Succès",
-          description: "Les positions ont été sauvegardées avec succès!",
+          description: "Votre calibration personnelle a été sauvegardée!",
         })
         await loadBanks()
       } else {

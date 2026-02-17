@@ -141,7 +141,49 @@ public class BanksController : ControllerBase
 
         return NoContent();
     }
+
+    // GET: api/banks/{bankId}/user-calibration
+    [HttpGet("{bankId}/user-calibration")]
+    public async Task<IActionResult> GetUserCalibration(int bankId)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var user = await _bankService.GetUserWithCalibrationsAsync(userId);
+        
+        if (user == null)
+            return NotFound(new { message = "Utilisateur non trouvé" });
+
+        var calibrations = JsonSerializer.Deserialize<Dictionary<string, string>>(user.CalibrationsJson) ?? new Dictionary<string, string>();
+        
+        if (calibrations.TryGetValue(bankId.ToString(), out var positionsJson))
+        {
+            return Ok(new { positionsJson });
+        }
+
+        // Return empty if no user-specific calibration
+        return Ok(new { positionsJson = "" });
+    }
+
+    // POST: api/banks/{bankId}/user-calibration
+    [HttpPost("{bankId}/user-calibration")]
+    public async Task<IActionResult> SaveUserCalibration(int bankId, [FromBody] SaveCalibrationRequest request)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        var success = await _bankService.SaveUserCalibrationAsync(userId, bankId, request.PositionsJson);
+
+        if (!success)
+            return NotFound(new { message = "Utilisateur non trouvé" });
+
+        // Log the action
+        await _auditService.LogAction(userId, "UPDATE_USER_CALIBRATION", "UserCalibration", bankId, new
+        {
+            bankId,
+            userId
+        });
+
+        return Ok(new { message = "Calibration utilisateur enregistrée" });
+    }
 }
 
 public record BankCreateRequest(string Code, string Name, IFormFile? Pdf);
 public record BankUpdateRequest(string? Code, string? Name, string? Positions, IFormFile? Pdf);
+public record SaveCalibrationRequest(string PositionsJson);

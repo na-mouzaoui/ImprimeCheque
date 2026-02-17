@@ -351,6 +351,10 @@ namespace CheckFillingAPI.Migrations
                     b.Property<string>("Region")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CalibrationsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -366,6 +370,7 @@ namespace CheckFillingAPI.Migrations
                         new
                         {
                             Id = 1,
+                            CalibrationsJson = "{}",
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Direction = "Test",
                             Email = "test@gmail.com",
@@ -378,6 +383,7 @@ namespace CheckFillingAPI.Migrations
                         new
                         {
                             Id = 2,
+                            CalibrationsJson = "{}",
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Direction = "Administration",
                             Email = "admin@test.com",
@@ -390,6 +396,7 @@ namespace CheckFillingAPI.Migrations
                         new
                         {
                             Id = 3,
+                            CalibrationsJson = "{}",
                             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Direction = "Administration",
                             Email = "admin@gmail.com",

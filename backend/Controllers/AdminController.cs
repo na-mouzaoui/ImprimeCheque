@@ -250,6 +250,37 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 
+    // POST: api/admin/users/{id}/reset-password
+    [HttpPost("users/{id}/reset-password")]
+    public async Task<IActionResult> ResetPassword(int id)
+    {
+        if (!await IsAdmin())
+            return Forbid();
+
+        var user = await _context.Users.FindAsync(id);
+        if (user == null)
+            return NotFound();
+
+        // Un admin ne peut pas réinitialiser le mot de passe d'un autre compte admin
+        if (user.Role == "admin")
+            return Forbid();
+
+        // Réinitialiser le mot de passe à "123456789"
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456789");
+        await _context.SaveChangesAsync();
+
+        // Audit log
+        await _auditService.LogAction(
+            GetCurrentUserId(),
+            "RESET_PASSWORD",
+            "User",
+            user.Id,
+            new { user.Email, ResetTo = "123456789" }
+        );
+
+        return Ok(new { message = "Mot de passe réinitialisé à 123456789" });
+    }
+
     // GET: api/admin/audit-logs
     [HttpGet("audit-logs")]
     public async Task<IActionResult> GetAuditLogs(

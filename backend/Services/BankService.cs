@@ -114,4 +114,22 @@ public class BankService : IBankService
 
         return $"/uploads/{fileName}";
     }
+
+    public async Task<User?> GetUserWithCalibrationsAsync(int userId)
+    {
+        return await _context.Users.FindAsync(userId);
+    }
+
+    public async Task<bool> SaveUserCalibrationAsync(int userId, int bankId, string positionsJson)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return false;
+
+        var calibrations = JsonSerializer.Deserialize<Dictionary<string, string>>(user.CalibrationsJson) ?? new Dictionary<string, string>();
+        calibrations[bankId.ToString()] = positionsJson;
+        user.CalibrationsJson = JsonSerializer.Serialize(calibrations);
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

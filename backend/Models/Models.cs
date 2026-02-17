@@ -11,6 +11,7 @@ public class User
     public string PhoneNumber { get; set; } = string.Empty;
     public string Role { get; set; } = "comptabilite"; // direction, comptabilite, regionale, admin
     public string? Region { get; set; } // nord, sud, est, ouest (pour role regionale uniquement)
+    public string CalibrationsJson { get; set; } = "{}"; // Stockage des calibrations par banque {bankId: positionsJson}
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public ICollection<Check> Checks { get; set; } = new List<Check>();

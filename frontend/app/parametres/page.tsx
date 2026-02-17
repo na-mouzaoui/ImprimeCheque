@@ -28,7 +28,7 @@ function ParametresContent() {
     )
   }
 
-  const hasAccess = user.role !== "direction" && user.role !== "regionale"
+  const hasAccess = user.role !== "direction"
 
   return (
     <LayoutWrapper user={user}>

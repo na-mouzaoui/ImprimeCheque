@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Eye, EyeOff } from "lucide-react";
+import { Pencil, Trash2, Plus, Eye, EyeOff, KeyRound } from "lucide-react";
 import { getRoleLabel } from "@/lib/roles";
 
 interface User {
@@ -248,6 +248,35 @@ export default function AdminUserManagement() {
     }
   };
 
+  const handleResetPassword = async (userId: number, userEmail: string) => {
+    if (!confirm(`Êtes-vous sûr de vouloir réinitialiser le mot de passe de ${userEmail} ?\n\nLe nouveau mot de passe sera : 123456789`)) return;
+
+    try {
+      const token = localStorage.getItem("jwt");
+      const response = await fetch(`http://172.20.0.3/api/admin/users/${userId}/reset-password`, {
+        method: "POST",
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la réinitialisation");
+      }
+
+      toast({
+        title: "Succès",
+        description: "Mot de passe réinitialisé à 123456789",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Échec de la réinitialisation",
+        variant: "destructive",
+      });
+    }
+  };
+
   const openEditDialog = (user: User) => {
     setSelectedUser(user);
     setFormData({
@@ -457,14 +486,25 @@ export default function AdminUserManagement() {
                       size="icon"
                       onClick={() => openEditDialog(user)}
                       disabled={user.email === "admin@test.com"}
+                      title="Modifier"
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => handleResetPassword(user.id, user.email)}
+                      disabled={user.email === "admin@test.com"}
+                      title="Réinitialiser le mot de passe"
+                    >
+                      <KeyRound className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleDelete(user.id)}
                       disabled={user.email === "admin@test.com"}
+                      title="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

@@ -24,7 +24,7 @@ export default function ChequePage() {
     )
   }
 
-  const hasAccess = user.role !== "direction" && user.role !== "regionale"
+  const hasAccess = user.role !== "direction"
 
   return (
     <LayoutWrapper user={user}>
@@ -33,7 +33,7 @@ export default function ChequePage() {
           <h1 className="text-3xl font-bold text-gray-900">Nouveau Chèque</h1>
         </div>
         {hasAccess ? (
-          <CheckForm userId={user.id} />
+          <CheckForm userId={user.id} user={user} />
         ) : (
           <AccessDeniedDialog
             title="Accès refusé"
