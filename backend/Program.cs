@@ -137,12 +137,24 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<CheckUpdatesHub>("/hubs/check-updates").RequireCors("AllowFrontend");
 
-// Initialize database - Activé pour créer automatiquement la base de données
+// Initialize database - Vérifie que la base existe, mais ne la crée pas
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    // Apply pending migrations or create database if missing
-    db.Database.Migrate();
+    // Vérifier si la base existe et appliquer les migrations seulement si elle existe déjà
+    if (db.Database.CanConnect())
+    {
+        var pendingMigrations = db.Database.GetPendingMigrations();
+        if (pendingMigrations.Any())
+        {
+            Console.WriteLine($"Application de {pendingMigrations.Count()} migrations en attente...");
+            db.Database.Migrate();
+        }
+    }
+    else
+    {
+        Console.WriteLine("ATTENTION: La base de données n'existe pas. Veuillez créer la base avec le script create-database.sql");
+    }
 }
 
 app.Run();
